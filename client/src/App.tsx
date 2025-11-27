@@ -3,14 +3,30 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/lib/auth";
+import Home from "@/pages/home";
+import Providers from "@/pages/providers";
+import ProviderProfile from "@/pages/provider-profile";
+import Login from "@/pages/login";
+import Register from "@/pages/register";
+import Booking from "@/pages/booking";
+import PatientDashboard from "@/pages/patient-dashboard";
+import ProviderDashboard from "@/pages/provider-dashboard";
+import ProviderSetup from "@/pages/provider-setup";
 import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
     <Switch>
-      {/* Add pages below */}
-      {/* <Route path="/" component={Home}/> */}
-      {/* Fallback to 404 */}
+      <Route path="/" component={Home} />
+      <Route path="/providers" component={Providers} />
+      <Route path="/provider/:id" component={ProviderProfile} />
+      <Route path="/login" component={Login} />
+      <Route path="/register" component={Register} />
+      <Route path="/booking" component={Booking} />
+      <Route path="/patient/dashboard" component={PatientDashboard} />
+      <Route path="/provider/dashboard" component={ProviderDashboard} />
+      <Route path="/provider/setup" component={ProviderSetup} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -20,8 +36,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Router />
+        <AuthProvider>
+          <Toaster />
+          <Router />
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
