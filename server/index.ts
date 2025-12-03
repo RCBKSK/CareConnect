@@ -78,6 +78,7 @@ app.use((req, res, next) => {
   } else {
     const { setupVite } = await import("./vite");
     await setupVite(httpServer, app);
+    log("Vite dev server configured");
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
