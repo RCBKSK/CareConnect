@@ -13,6 +13,13 @@ import Booking from "@/pages/booking";
 import PatientDashboard from "@/pages/patient-dashboard";
 import ProviderDashboard from "@/pages/provider-dashboard";
 import ProviderSetup from "@/pages/provider-setup";
+import Terms from "@/pages/terms";
+import Privacy from "@/pages/privacy";
+import About from "@/pages/about";
+import BecomeProvider from "@/pages/become-provider";
+import Appointments from "@/pages/appointments";
+import Profile from "@/pages/profile";
+import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -27,6 +34,13 @@ function Router() {
       <Route path="/patient/dashboard" component={PatientDashboard} />
       <Route path="/provider/dashboard" component={ProviderDashboard} />
       <Route path="/provider/setup" component={ProviderSetup} />
+      <Route path="/terms" component={Terms} />
+      <Route path="/privacy" component={Privacy} />
+      <Route path="/about" component={About} />
+      <Route path="/become-provider" component={BecomeProvider} />
+      <Route path="/appointments" component={Appointments} />
+      <Route path="/profile" component={Profile} />
+      <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>
   );

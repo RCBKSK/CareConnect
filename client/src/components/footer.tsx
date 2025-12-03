@@ -11,7 +11,7 @@ export function Footer() {
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
                 <Stethoscope className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-semibold">CareConnect</span>
+              <span className="text-xl font-semibold">Golden Life</span>
             </Link>
             <p className="text-sm text-muted-foreground">
               Connecting patients with trusted healthcare professionals. Quality care delivered to your doorstep.
@@ -75,26 +75,26 @@ export function Footer() {
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
-                <a href="mailto:support@careconnect.com" className="hover:text-foreground transition-colors">
-                  support@careconnect.com
+                <a href="mailto:info@goldenlife.health" className="hover:text-foreground transition-colors">
+                  info@goldenlife.health
                 </a>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4" />
-                <a href="tel:+1234567890" className="hover:text-foreground transition-colors">
-                  +1 (234) 567-890
+                <a href="tel:+36702370103" className="hover:text-foreground transition-colors">
+                  +36 70 237 0103
                 </a>
               </li>
               <li className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 mt-0.5" />
-                <span>123 Healthcare Ave, Medical City, MC 12345</span>
+                <span>Hungary, 3060 Pásztó, Semmelweis utca 10.</span>
               </li>
             </ul>
           </div>
         </div>
 
         <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} CareConnect. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Golden Life. All rights reserved.</p>
         </div>
       </div>
     </footer>
