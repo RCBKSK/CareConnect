@@ -78,7 +78,7 @@ export default function Register() {
       });
       toast({
         title: "Account created!",
-        description: "Welcome to CareConnect. You can now book appointments.",
+        description: "Welcome to Golden Life. You can now book appointments.",
       });
       if (data.role === "provider") {
         navigate("/provider/setup");
@@ -108,7 +108,7 @@ export default function Register() {
             </div>
             <CardTitle className="text-2xl">Create Account</CardTitle>
             <CardDescription>
-              Join CareConnect and access quality healthcare
+              Join Golden Life and access quality healthcare
             </CardDescription>
           </CardHeader>
 

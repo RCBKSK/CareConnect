@@ -9,7 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, MapPin } from "lucide-react";
+import { Search, MapPin, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface SearchBarProps {
   className?: string;
@@ -20,6 +21,7 @@ export function SearchBar({ className = "", variant = "hero" }: SearchBarProps) 
   const [, navigate] = useLocation();
   const [location, setLocation] = useState("");
   const [serviceType, setServiceType] = useState<string>("");
+  const [isFocused, setIsFocused] = useState(false);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,34 +63,57 @@ export function SearchBar({ className = "", variant = "hero" }: SearchBarProps) 
   }
 
   return (
-    <form onSubmit={handleSearch} className={`w-full ${className}`}>
-      <div className="flex flex-col md:flex-row gap-3 p-4 bg-background/95 backdrop-blur rounded-xl shadow-lg border">
+    <motion.form 
+      onSubmit={handleSearch} 
+      className={`w-full ${className}`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3, duration: 0.5 }}
+    >
+      <motion.div 
+        className={`flex flex-col md:flex-row gap-3 p-4 md:p-5 bg-background/95 backdrop-blur-md rounded-2xl shadow-xl border-2 transition-all duration-300 ${isFocused ? 'border-primary/30 shadow-primary/10' : 'border-transparent'}`}
+        whileHover={{ scale: 1.01 }}
+        transition={{ type: "spring", stiffness: 300 }}
+      >
         <div className="relative flex-1">
-          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />
           <Input
             placeholder="Enter your city or area..."
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            className="pl-12 h-12 text-base"
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            className="pl-12 h-14 text-base rounded-xl border-2 focus:border-primary/50 transition-colors"
             data-testid="input-location"
           />
         </div>
         <Select value={serviceType} onValueChange={setServiceType}>
-          <SelectTrigger className="h-12 md:w-[220px]" data-testid="select-service-type">
+          <SelectTrigger 
+            className="h-14 md:w-[240px] rounded-xl border-2 focus:border-primary/50 transition-colors" 
+            data-testid="select-service-type"
+          >
             <SelectValue placeholder="Select service type" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Services</SelectItem>
-            <SelectItem value="physiotherapist">Physiotherapy</SelectItem>
-            <SelectItem value="nurse">Home Nursing</SelectItem>
-            <SelectItem value="doctor">Doctor Visit</SelectItem>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="all" className="rounded-lg">All Services</SelectItem>
+            <SelectItem value="physiotherapist" className="rounded-lg">Physiotherapy</SelectItem>
+            <SelectItem value="nurse" className="rounded-lg">Home Nursing</SelectItem>
+            <SelectItem value="doctor" className="rounded-lg">Doctor Visit</SelectItem>
           </SelectContent>
         </Select>
-        <Button type="submit" size="lg" className="h-12 px-8" data-testid="button-search">
-          <Search className="h-5 w-5 mr-2" />
-          Search
-        </Button>
-      </div>
-    </form>
+        <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}>
+          <Button 
+            type="submit" 
+            size="lg" 
+            className="h-14 px-8 rounded-xl shadow-lg glow font-semibold text-base" 
+            data-testid="button-search"
+          >
+            <Search className="h-5 w-5 mr-2" />
+            Search
+            <Sparkles className="h-4 w-4 ml-2 opacity-70" />
+          </Button>
+        </motion.div>
+      </motion.div>
+    </motion.form>
   );
 }
