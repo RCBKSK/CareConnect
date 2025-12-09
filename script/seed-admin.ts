@@ -26,7 +26,7 @@ async function seedAdmin() {
         role: "admin",
       }).returning();
       adminUser = newAdmin;
-      console.log("✓ Admin user created:", adminEmail, "/ Password:", adminPassword);
+      console.log("✓ Admin user created:", adminEmail);
     } else {
       adminUser = existingAdmin[0];
       console.log("✓ Admin user already exists");
@@ -86,12 +86,10 @@ async function seedAdmin() {
     }
 
     console.log("\n=== Seed Complete ===");
-    console.log("Admin Login:");
-    console.log("  Email:", adminEmail);
-    console.log("  Password:", adminPassword);
-    console.log("\nElite Physiotherapists Login:");
-    console.log("  Email:", providerEmail);
-    console.log("  Password:", providerPassword);
+    console.log("Admin and provider accounts created in Supabase database");
+    console.log("\nDefault login credentials (stored securely in seed-admin.ts):");
+    console.log("  Admin Email:", adminEmail);
+    console.log("  Provider Email:", providerEmail);
     console.log("\nYou can now:");
     console.log("1. Login as admin at /login to manage providers");
     console.log("2. Visit /admin to access the admin dashboard");
