@@ -110,6 +110,7 @@ export const payments = pgTable("payments", {
   patientId: varchar("patient_id").notNull().references(() => users.id),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   currency: text("currency").default("USD"),
+  paymentMethod: text("payment_method").notNull().default("card"),
   status: paymentStatusEnum("status").notNull().default("pending"),
   stripePaymentId: text("stripe_payment_id"),
   stripeSessionId: text("stripe_session_id"),

@@ -6,6 +6,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { randomBytes } from "crypto";
 import { loginSchema, registerSchema, insertProviderSchema, insertAppointmentSchema, insertReviewSchema } from "@shared/schema";
+import crypto from 'crypto'; // Import crypto module for randomUUID
 
 const JWT_SECRET = process.env.SESSION_SECRET || "careconnect-jwt-secret-key";
 const JWT_EXPIRES_IN = "15m";
@@ -336,20 +337,44 @@ export async function registerRoutes(
   // Create appointment
   app.post("/api/appointments", authenticateToken, async (req: AuthRequest, res: Response) => {
     try {
-      const { providerId, serviceId, date, startTime, endTime, visitType, notes, patientAddress, totalAmount } = req.body;
+      const { providerId, serviceId, appointmentDate, appointmentTime, appointmentType, paymentMethod, notes } = req.body;
+      const userId = req.user?.id;
 
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      // Get provider to calculate fee
+      const provider = await storage.getProvider(providerId);
+      if (!provider) {
+        return res.status(404).json({ message: "Provider not found" });
+      }
+
+      const fee = appointmentType === "home" && provider.homeVisitFee
+        ? provider.homeVisitFee
+        : provider.consultationFee;
+
+      // Create appointment
       const appointment = await storage.createAppointment({
-        patientId: req.user!.id,
+        id: crypto.randomUUID(),
+        userId,
         providerId,
         serviceId,
-        date,
-        startTime,
-        endTime,
-        visitType,
-        notes,
-        patientAddress,
-        totalAmount: totalAmount.toString(),
+        appointmentDate: new Date(appointmentDate),
+        appointmentTime,
+        appointmentType,
         status: "pending",
+        notes: notes || null,
+      });
+
+      // Create payment record with payment method
+      await storage.createPayment({
+        id: crypto.randomUUID(),
+        appointmentId: appointment.id,
+        amount: fee,
+        paymentMethod: paymentMethod || "card",
+        status: paymentMethod === "cash" ? "pending" : "pending",
+        transactionId: null,
       });
 
       res.status(201).json(appointment);
@@ -445,15 +470,15 @@ export async function registerRoutes(
   // Admin: Create provider directly
   app.post("/api/admin/providers", authenticateToken, requireAdmin, async (req: AuthRequest, res: Response) => {
     try {
-      const { 
+      const {
         email, password, firstName, lastName, phone, city,
-        type, specialization, bio, yearsExperience, education, 
-        consultationFee, homeVisitFee, languages, availableDays 
+        type, specialization, bio, yearsExperience, education,
+        consultationFee, homeVisitFee, languages, availableDays
       } = req.body;
 
       // Check if user exists
       let user = await storage.getUserByEmail(email);
-      
+
       if (!user) {
         // Create user account
         const hashedPassword = await bcrypt.hash(password, 10);

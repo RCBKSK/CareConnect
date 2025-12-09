@@ -24,7 +24,11 @@ import {
   CheckCircle,
   ArrowLeft,
   Loader2,
+  Wallet,
+  Banknote,
+  Building2,
 } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { ProviderWithServices, Service } from "@shared/schema";
 
 export default function Booking() {
@@ -43,6 +47,7 @@ export default function Booking() {
   const [notes, setNotes] = useState("");
   const [address, setAddress] = useState(user?.address || "");
   const [step, setStep] = useState<"review" | "payment" | "confirmed">("review");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto" | "cash" | "bank_transfer">("card");
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -56,7 +61,7 @@ export default function Booking() {
   });
 
   const selectedService = provider?.services?.find(s => s.id === serviceId);
-  
+
   const bookingMutation = useMutation({
     mutationFn: async (data: any) => {
       const response = await apiRequest("POST", "/api/appointments", data);
@@ -64,20 +69,21 @@ export default function Booking() {
         const error = await response.json();
         throw new Error(error.message || "Failed to book appointment");
       }
-      return response.json();
+      const appointment = await response.json();
+      return appointment;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
-      setStep("confirmed");
       toast({
-        title: "Appointment Booked!",
-        description: "Your appointment has been confirmed. Check your email for details.",
+        title: "Success",
+        description: `Your appointment has been booked successfully! Payment method: ${paymentMethod === 'crypto' ? 'Cryptocurrency' : paymentMethod === 'card' ? 'Credit/Debit Card' : paymentMethod === 'bank_transfer' ? 'Bank Transfer' : 'Cash'}`,
       });
+      navigate("/appointments");
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast({
-        title: "Booking failed",
-        description: error.message,
+        title: "Error",
+        description: "Failed to book appointment. Please try again.",
         variant: "destructive",
       });
     },
@@ -101,6 +107,7 @@ export default function Booking() {
       startTime: time,
       endTime: endTimeStr,
       visitType,
+      paymentMethod,
       notes,
       patientAddress: visitType === "home" ? address : null,
       totalAmount: fee,
@@ -164,7 +171,7 @@ export default function Booking() {
             <p className="text-muted-foreground mb-8">
               Your appointment has been successfully booked. You will receive a confirmation email shortly.
             </p>
-            
+
             <Card className="text-left mb-6">
               <CardContent className="p-6 space-y-4">
                 <div className="flex items-center gap-4">
@@ -306,6 +313,69 @@ export default function Booking() {
                       </div>
                     </div>
                   )}
+
+                  <div className="space-y-3">
+                    <Label>Payment Method</Label>
+                    <RadioGroup value={paymentMethod} onValueChange={(value: any) => setPaymentMethod(value)}>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Label
+                          htmlFor="card"
+                          className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                            paymentMethod === "card" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                          }`}
+                        >
+                          <RadioGroupItem value="card" id="card" />
+                          <CreditCard className="h-5 w-5 text-primary" />
+                          <div className="flex-1">
+                            <p className="font-medium">Card</p>
+                            <p className="text-xs text-muted-foreground">Credit/Debit</p>
+                          </div>
+                        </Label>
+
+                        <Label
+                          htmlFor="crypto"
+                          className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                            paymentMethod === "crypto" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                          }`}
+                        >
+                          <RadioGroupItem value="crypto" id="crypto" />
+                          <Wallet className="h-5 w-5 text-primary" />
+                          <div className="flex-1">
+                            <p className="font-medium">Crypto</p>
+                            <p className="text-xs text-muted-foreground">BTC, ETH, USDT</p>
+                          </div>
+                        </Label>
+
+                        <Label
+                          htmlFor="bank_transfer"
+                          className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                            paymentMethod === "bank_transfer" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                          }`}
+                        >
+                          <RadioGroupItem value="bank_transfer" id="bank_transfer" />
+                          <Building2 className="h-5 w-5 text-primary" />
+                          <div className="flex-1">
+                            <p className="font-medium">Bank Transfer</p>
+                            <p className="text-xs text-muted-foreground">Direct</p>
+                          </div>
+                        </Label>
+
+                        <Label
+                          htmlFor="cash"
+                          className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                            paymentMethod === "cash" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                          }`}
+                        >
+                          <RadioGroupItem value="cash" id="cash" />
+                          <Banknote className="h-5 w-5 text-primary" />
+                          <div className="flex-1">
+                            <p className="font-medium">Cash</p>
+                            <p className="text-xs text-muted-foreground">Pay later</p>
+                          </div>
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="notes">Additional Notes (Optional)</Label>
