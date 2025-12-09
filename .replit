@@ -54,4 +54,4 @@ expertMode = true
 [userenv]
 
 [userenv.shared]
-SUPABASE_DATABASE_URL = "postgresql://postgres:Nikitha123%40@db.copmajkovhknycjyynxh.supabase.co:5432/postgres"
+SUPABASE_DATABASE_URL = "postgresql://postgres.copmajkovhknycjyynxh:Nikitha123%40@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres"
