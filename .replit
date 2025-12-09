@@ -14,6 +14,10 @@ run = ["npm", "run", "start"]
 localPort = 5000
 externalPort = 80
 
+[[ports]]
+localPort = 44877
+externalPort = 3000
+
 
 
 [env]
@@ -46,3 +50,8 @@ outputType = "webview"
 [agent]
 integrations = ["javascript_database:1.0.0"]
 expertMode = true
+
+[userenv]
+
+[userenv.shared]
+SUPABASE_DATABASE_URL = "postgresql://postgres:Nikitha123%40@db.copmajkovhknycjyynxh.supabase.co:5432/postgres"
