@@ -76,7 +76,7 @@ export function Header() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          
+
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -104,10 +104,19 @@ export function Header() {
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href={getDashboardLink()} className="cursor-pointer" data-testid="link-dashboard">
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    Dashboard
-                  </Link>
+                  {user.role === "admin" ? (
+                    <Button asChild variant="ghost" size="sm">
+                      <Link href="/admin/dashboard">Admin</Link>
+                    </Button>
+                  ) : user.role === "provider" ? (
+                    <Button asChild variant="ghost" size="sm">
+                      <Link href="/provider/dashboard">Dashboard</Link>
+                    </Button>
+                  ) : (
+                    <Button asChild variant="ghost" size="sm">
+                      <Link href="/patient/dashboard">Dashboard</Link>
+                    </Button>
+                  )}
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/appointments" className="cursor-pointer" data-testid="link-appointments">

@@ -432,6 +432,84 @@ export async function registerRoutes(
     }
   });
 
+  // ============ ADMIN ROUTES ============
+
+  // Middleware to check admin role
+  const requireAdmin = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user || req.user.role !== "admin") {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    next();
+  };
+
+  // Admin: Create provider directly
+  app.post("/api/admin/providers", authenticateToken, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { 
+        email, password, firstName, lastName, phone, city,
+        type, specialization, bio, yearsExperience, education, 
+        consultationFee, homeVisitFee, languages, availableDays 
+      } = req.body;
+
+      // Check if user exists
+      let user = await storage.getUserByEmail(email);
+      
+      if (!user) {
+        // Create user account
+        const hashedPassword = await bcrypt.hash(password, 10);
+        user = await storage.createUser({
+          email,
+          password: hashedPassword,
+          firstName,
+          lastName,
+          phone: phone || "",
+          role: "provider",
+          city,
+        });
+      } else {
+        // Update existing user to provider role
+        await storage.updateUser(user.id, { role: "provider", city });
+      }
+
+      // Check if provider profile already exists
+      const existingProvider = await storage.getProviderByUserId(user.id);
+      if (existingProvider) {
+        return res.status(400).json({ message: "Provider profile already exists for this user" });
+      }
+
+      // Create provider profile
+      const provider = await storage.createProvider({
+        userId: user.id,
+        type,
+        specialization,
+        bio,
+        yearsExperience,
+        education,
+        consultationFee: consultationFee.toString(),
+        homeVisitFee: homeVisitFee ? homeVisitFee.toString() : null,
+        languages,
+        availableDays,
+        isVerified: true,
+        isActive: true,
+      });
+
+      res.status(201).json({ provider, user });
+    } catch (error) {
+      console.error("Admin create provider error:", error);
+      res.status(500).json({ message: "Failed to create provider" });
+    }
+  });
+
+  // Admin: Get all users
+  app.get("/api/admin/users", authenticateToken, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get users" });
+    }
+  });
+
   // ============ SERVICE ROUTES ============
 
   // Get provider services

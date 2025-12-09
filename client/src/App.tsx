@@ -13,6 +13,8 @@ import Booking from "@/pages/booking";
 import PatientDashboard from "@/pages/patient-dashboard";
 import ProviderDashboard from "@/pages/provider-dashboard";
 import ProviderSetup from "@/pages/provider-setup";
+import AdminDashboard from "@/pages/admin-dashboard";
+import NotFound from "@/pages/not-found";
 import Terms from "@/pages/terms";
 import Privacy from "@/pages/privacy";
 import About from "@/pages/about";
@@ -20,7 +22,6 @@ import BecomeProvider from "@/pages/become-provider";
 import Appointments from "@/pages/appointments";
 import Profile from "@/pages/profile";
 import Settings from "@/pages/settings";
-import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
@@ -34,6 +35,7 @@ function Router() {
       <Route path="/patient/dashboard" component={PatientDashboard} />
       <Route path="/provider/dashboard" component={ProviderDashboard} />
       <Route path="/provider/setup" component={ProviderSetup} />
+      <Route path="/admin" component={AdminDashboard} />
       <Route path="/terms" component={Terms} />
       <Route path="/privacy" component={Privacy} />
       <Route path="/about" component={About} />
@@ -48,7 +50,7 @@ function Router() {
 
 function App() {
   console.log("App component rendering");
-  
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
