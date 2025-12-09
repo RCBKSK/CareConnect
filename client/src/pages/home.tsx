@@ -9,7 +9,8 @@ import { Testimonials } from "@/components/testimonials";
 import { CTASection } from "@/components/cta-section";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { Shield, Clock, Award, Sparkles } from "lucide-react";
+import { Shield, Clock, Award, Sparkles, CreditCard, Wallet, Banknote } from "lucide-react";
+import { SiVisa, SiMastercard, SiGooglepay, SiApplepay } from "react-icons/si";
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth"; // Assuming useAuth is imported from here
 
@@ -199,6 +200,47 @@ export default function Home() {
                   <p className="text-sm text-muted-foreground">Rated 4.9/5 by thousands of patients</p>
                 </div>
               </motion.div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Payment Methods Section */}
+        <section className="py-8 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <motion.div
+              className="flex flex-col items-center gap-4"
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              <p className="text-sm text-muted-foreground font-medium">We Accept</p>
+              <div className="flex flex-wrap justify-center items-center gap-6">
+                <div className="flex items-center gap-2 text-muted-foreground" data-testid="payment-visa">
+                  <SiVisa className="h-8 w-12" />
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground" data-testid="payment-mastercard">
+                  <SiMastercard className="h-8 w-8" />
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground" data-testid="payment-gpay">
+                  <SiGooglepay className="h-8 w-12" />
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground" data-testid="payment-applepay">
+                  <SiApplepay className="h-8 w-12" />
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground" data-testid="payment-card">
+                  <CreditCard className="h-6 w-6" />
+                  <span className="text-sm">Credit/Debit</span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground" data-testid="payment-wallet">
+                  <Wallet className="h-6 w-6" />
+                  <span className="text-sm">UPI</span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground" data-testid="payment-netbanking">
+                  <Banknote className="h-6 w-6" />
+                  <span className="text-sm">Net Banking</span>
+                </div>
+              </div>
             </motion.div>
           </div>
         </section>
