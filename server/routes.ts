@@ -560,6 +560,112 @@ export async function registerRoutes(
     }
   });
 
+  // Admin: Promo code management
+  app.get("/api/admin/promo-codes", authenticateToken, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const promoCodes = await storage.getAllPromoCodes();
+      res.json(promoCodes);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get promo codes" });
+    }
+  });
+
+  app.post("/api/admin/promo-codes", authenticateToken, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { code, description, discountType, discountValue, maxUses, validFrom, validUntil, applicableProviders, minAmount } = req.body;
+      
+      const promoCode = await storage.createPromoCode({
+        code: code.toUpperCase(),
+        description,
+        discountType,
+        discountValue: discountValue.toString(),
+        maxUses: maxUses || null,
+        validFrom: new Date(validFrom),
+        validUntil: new Date(validUntil),
+        applicableProviders: applicableProviders || null,
+        minAmount: minAmount ? minAmount.toString() : null,
+        isActive: true,
+      });
+
+      res.status(201).json(promoCode);
+    } catch (error) {
+      console.error("Create promo code error:", error);
+      res.status(500).json({ message: "Failed to create promo code" });
+    }
+  });
+
+  app.patch("/api/admin/promo-codes/:id", authenticateToken, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const updated = await storage.updatePromoCode(req.params.id, req.body);
+      if (!updated) {
+        return res.status(404).json({ message: "Promo code not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update promo code" });
+    }
+  });
+
+  app.delete("/api/admin/promo-codes/:id", authenticateToken, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      await storage.deletePromoCode(req.params.id);
+      res.json({ message: "Promo code deleted" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete promo code" });
+    }
+  });
+
+  // Admin: Provider pricing override management
+  app.get("/api/admin/pricing-overrides", authenticateToken, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const overrides = await storage.getAllPricingOverrides();
+      res.json(overrides);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get pricing overrides" });
+    }
+  });
+
+  app.post("/api/admin/pricing-overrides", authenticateToken, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { providerId, consultationFee, homeVisitFee, discountPercentage, notes } = req.body;
+      
+      const override = await storage.createProviderPricingOverride({
+        providerId,
+        consultationFee: consultationFee ? consultationFee.toString() : null,
+        homeVisitFee: homeVisitFee ? homeVisitFee.toString() : null,
+        discountPercentage: discountPercentage ? discountPercentage.toString() : null,
+        notes: notes || null,
+        isActive: true,
+      });
+
+      res.status(201).json(override);
+    } catch (error) {
+      console.error("Create pricing override error:", error);
+      res.status(500).json({ message: "Failed to create pricing override" });
+    }
+  });
+
+  app.patch("/api/admin/pricing-overrides/:id", authenticateToken, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const updated = await storage.updateProviderPricingOverride(req.params.id, req.body);
+      if (!updated) {
+        return res.status(404).json({ message: "Pricing override not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update pricing override" });
+    }
+  });
+
+  app.delete("/api/admin/pricing-overrides/:id", authenticateToken, requireAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      await storage.deleteProviderPricingOverride(req.params.id);
+      res.json({ message: "Pricing override deleted" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete pricing override" });
+    }
+  });
+
   // ============ SERVICE ROUTES ============
 
   // Get provider services

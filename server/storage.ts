@@ -7,26 +7,34 @@ import {
   reviews,
   payments,
   refreshTokens,
-  type User,
-  type InsertUser,
-  type Provider,
-  type InsertProvider,
-  type Service,
-  type InsertService,
-  type TimeSlot,
-  type InsertTimeSlot,
-  type Appointment,
-  type InsertAppointment,
-  type Review,
-  type InsertReview,
-  type Payment,
-  type InsertPayment,
-  type RefreshToken,
-  type InsertRefreshToken,
-  type ProviderWithUser,
-  type ProviderWithServices,
-  type AppointmentWithDetails,
-  type ReviewWithPatient,
+  promoCodes,
+  providerPricingOverrides,
+} from "@shared/schema";
+import type {
+  User,
+  InsertUser,
+  Provider,
+  InsertProvider,
+  Service,
+  InsertService,
+  TimeSlot,
+  InsertTimeSlot,
+  Appointment,
+  InsertAppointment,
+  Review,
+  InsertReview,
+  Payment,
+  InsertPayment,
+  RefreshToken,
+  InsertRefreshToken,
+  ProviderWithUser,
+  ProviderWithServices,
+  AppointmentWithDetails,
+  ReviewWithPatient,
+  PromoCode,
+  InsertPromoCode,
+  ProviderPricingOverride,
+  InsertProviderPricingOverride,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, gte, lte, or, sql } from "drizzle-orm";
@@ -86,6 +94,20 @@ export interface IStorage {
   createRefreshToken(refreshToken: InsertRefreshToken): Promise<RefreshToken>;
   deleteRefreshToken(token: string): Promise<void>;
   deleteRefreshTokensByUser(userId: string): Promise<void>;
+
+  // Promo Codes
+  createPromoCode(data: InsertPromoCode): Promise<PromoCode>;
+  getAllPromoCodes(): Promise<PromoCode[]>;
+  getPromoCodeByCode(code: string): Promise<PromoCode | undefined>;
+  updatePromoCode(id: string, data: Partial<PromoCode>): Promise<PromoCode | undefined>;
+  deletePromoCode(id: string): Promise<void>;
+
+  // Provider Pricing Overrides
+  createProviderPricingOverride(data: InsertProviderPricingOverride): Promise<ProviderPricingOverride>;
+  getProviderPricingOverride(providerId: string): Promise<ProviderPricingOverride | undefined>;
+  getAllPricingOverrides(): Promise<ProviderPricingOverride[]>;
+  updateProviderPricingOverride(id: string, data: Partial<ProviderPricingOverride>): Promise<ProviderPricingOverride | undefined>;
+  deleteProviderPricingOverride(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -350,7 +372,7 @@ export class DatabaseStorage implements IStorage {
 
   async createReview(insertReview: InsertReview): Promise<Review> {
     const [review] = await db.insert(reviews).values(insertReview).returning();
-    
+
     // Update provider rating
     const providerReviews = await this.getReviewsByProvider(insertReview.providerId);
     const avgRating = providerReviews.reduce((sum, r) => sum + r.rating, 0) / providerReviews.length;
@@ -400,6 +422,62 @@ export class DatabaseStorage implements IStorage {
 
   async deleteRefreshTokensByUser(userId: string): Promise<void> {
     await db.delete(refreshTokens).where(eq(refreshTokens.userId, userId));
+  }
+
+  // Promo code operations
+  async createPromoCode(data: InsertPromoCode): Promise<PromoCode> {
+    const [promoCode] = await db.insert(promoCodes).values(data).returning();
+    return promoCode;
+  }
+
+  async getAllPromoCodes(): Promise<PromoCode[]> {
+    return await db.select().from(promoCodes).orderBy(desc(promoCodes.createdAt));
+  }
+
+  async getPromoCodeByCode(code: string): Promise<PromoCode | undefined> {
+    const [promoCode] = await db.select().from(promoCodes).where(eq(promoCodes.code, code.toUpperCase()));
+    return promoCode;
+  }
+
+  async updatePromoCode(id: string, data: Partial<PromoCode>): Promise<PromoCode | undefined> {
+    const [updated] = await db.update(promoCodes).set(data).where(eq(promoCodes.id, id)).returning();
+    return updated;
+  }
+
+  async deletePromoCode(id: string): Promise<void> {
+    await db.delete(promoCodes).where(eq(promoCodes.id, id));
+  }
+
+  // Provider pricing override operations
+  async createProviderPricingOverride(data: InsertProviderPricingOverride): Promise<ProviderPricingOverride> {
+    const [override] = await db.insert(providerPricingOverrides).values(data).returning();
+    return override;
+  }
+
+  async getProviderPricingOverride(providerId: string): Promise<ProviderPricingOverride | undefined> {
+    const [override] = await db.select()
+      .from(providerPricingOverrides)
+      .where(and(
+        eq(providerPricingOverrides.providerId, providerId),
+        eq(providerPricingOverrides.isActive, true)
+      ));
+    return override;
+  }
+
+  async getAllPricingOverrides(): Promise<ProviderPricingOverride[]> {
+    return await db.select().from(providerPricingOverrides).orderBy(desc(providerPricingOverrides.createdAt));
+  }
+
+  async updateProviderPricingOverride(id: string, data: Partial<ProviderPricingOverride>): Promise<ProviderPricingOverride | undefined> {
+    const [updated] = await db.update(providerPricingOverrides)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(providerPricingOverrides.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteProviderPricingOverride(id: string): Promise<void> {
+    await db.delete(providerPricingOverrides).where(eq(providerPricingOverrides.id, id));
   }
 }
 

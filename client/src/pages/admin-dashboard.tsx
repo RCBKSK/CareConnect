@@ -14,6 +14,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import {
   Select,
@@ -30,8 +31,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, Shield, Users, Building } from "lucide-react";
-import type { User, ProviderWithUser } from "@shared/schema";
+import { Loader2, Shield, Users, Building, Trash2, Edit, Plus, Tag, DollarSign } from "lucide-react";
+import type { User, ProviderWithUser, PromoCode, ProviderPricingOverride } from "@shared/schema";
 import { useLocation } from "wouter";
 
 const adminProviderSchema = z.object({
@@ -60,6 +61,494 @@ const languageOptions = [
   { value: "german", label: "German" },
   { value: "french", label: "French" },
 ];
+
+
+
+// Pricing Management Component
+function PricingManagement({ providers }: { providers: ProviderWithUser[] }) {
+  const { toast } = useToast();
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const { data: pricingOverrides, refetch } = useQuery<ProviderPricingOverride[]>({
+    queryKey: ["/api/admin/pricing-overrides"],
+  });
+
+  const pricingForm = useForm<{
+    providerId: string;
+    consultationFee?: number;
+    homeVisitFee?: number;
+    discountPercentage?: number;
+    notes?: string;
+  }>({
+    defaultValues: {
+      providerId: "",
+      consultationFee: undefined,
+      homeVisitFee: undefined,
+      discountPercentage: undefined,
+      notes: "",
+    },
+  });
+
+  const createPricingMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await apiRequest(editingId ? "PATCH" : "POST", 
+        editingId ? `/api/admin/pricing-overrides/${editingId}` : "/api/admin/pricing-overrides", 
+        data
+      );
+      if (!response.ok) throw new Error("Failed to save pricing override");
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: editingId ? "Pricing updated!" : "Pricing override created!" });
+      pricingForm.reset();
+      setEditingId(null);
+      refetch();
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deletePricingMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest("DELETE", `/api/admin/pricing-overrides/${id}`);
+      if (!response.ok) throw new Error("Failed to delete");
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Pricing override deleted" });
+      refetch();
+    },
+  });
+
+  const onSubmit = (data: any) => {
+    createPricingMutation.mutate(data);
+  };
+
+  return (
+    <div className="space-y-6">
+      <Form {...pricingForm}>
+        <form onSubmit={pricingForm.handleSubmit(onSubmit)} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={pricingForm.control}
+              name="providerId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Provider</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select provider" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {providers.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.user.firstName} {p.user.lastName} - {p.specialization}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={pricingForm.control}
+              name="consultationFee"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Custom Consultation Fee ($)</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.01" {...field} value={field.value || ""} onChange={e => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
+                  </FormControl>
+                  <FormDescription>Leave empty to use provider's default</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={pricingForm.control}
+              name="homeVisitFee"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Custom Home Visit Fee ($)</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.01" {...field} value={field.value || ""} onChange={e => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
+                  </FormControl>
+                  <FormDescription>Leave empty to use provider's default</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={pricingForm.control}
+              name="discountPercentage"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Discount Percentage (%)</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.01" max="100" {...field} value={field.value || ""} onChange={e => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
+                  </FormControl>
+                  <FormDescription>Applies to all provider's services</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <FormField
+            control={pricingForm.control}
+            name="notes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Notes</FormLabel>
+                <FormControl>
+                  <Textarea {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="flex gap-2">
+            <Button type="submit" disabled={createPricingMutation.isPending}>
+              {createPricingMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              <span className="ml-2">{editingId ? "Update" : "Create"} Override</span>
+            </Button>
+            {editingId && (
+              <Button type="button" variant="outline" onClick={() => { setEditingId(null); pricingForm.reset(); }}>
+                Cancel
+              </Button>
+            )}
+          </div>
+        </form>
+      </Form>
+
+      <div className="space-y-4">
+        <h3 className="font-semibold">Active Pricing Overrides</h3>
+        {pricingOverrides?.map((override) => {
+          const provider = providers.find(p => p.id === override.providerId);
+          return (
+            <div key={override.id} className="flex items-center justify-between p-4 border rounded-lg">
+              <div>
+                <p className="font-medium">{provider?.user.firstName} {provider?.user.lastName}</p>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  {override.consultationFee && <p>Consultation: ${Number(override.consultationFee).toFixed(2)}</p>}
+                  {override.homeVisitFee && <p>Home Visit: ${Number(override.homeVisitFee).toFixed(2)}</p>}
+                  {override.discountPercentage && <p>Discount: {Number(override.discountPercentage)}%</p>}
+                  {override.notes && <p className="italic">{override.notes}</p>}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setEditingId(override.id);
+                    pricingForm.reset({
+                      providerId: override.providerId,
+                      consultationFee: override.consultationFee ? Number(override.consultationFee) : undefined,
+                      homeVisitFee: override.homeVisitFee ? Number(override.homeVisitFee) : undefined,
+                      discountPercentage: override.discountPercentage ? Number(override.discountPercentage) : undefined,
+                      notes: override.notes || "",
+                    });
+                  }}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => deletePricingMutation.mutate(override.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Promo Code Management Component
+function PromoCodeManagement({ providers }: { providers: ProviderWithUser[] }) {
+  const { toast } = useToast();
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const { data: promoCodes, refetch } = useQuery<PromoCode[]>({
+    queryKey: ["/api/admin/promo-codes"],
+  });
+
+  const promoForm = useForm<{
+    code: string;
+    description: string;
+    discountType: "percentage" | "fixed";
+    discountValue: number;
+    maxUses?: number;
+    validFrom: string;
+    validUntil: string;
+    applicableProviders?: string[];
+    minAmount?: number;
+  }>({
+    defaultValues: {
+      code: "",
+      description: "",
+      discountType: "percentage",
+      discountValue: 0,
+      maxUses: undefined,
+      validFrom: new Date().toISOString().split('T')[0],
+      validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      applicableProviders: [],
+      minAmount: undefined,
+    },
+  });
+
+  const createPromoMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await apiRequest(editingId ? "PATCH" : "POST",
+        editingId ? `/api/admin/promo-codes/${editingId}` : "/api/admin/promo-codes",
+        data
+      );
+      if (!response.ok) throw new Error("Failed to save promo code");
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: editingId ? "Promo code updated!" : "Promo code created!" });
+      promoForm.reset();
+      setEditingId(null);
+      refetch();
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deletePromoMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest("DELETE", `/api/admin/promo-codes/${id}`);
+      if (!response.ok) throw new Error("Failed to delete");
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Promo code deleted" });
+      refetch();
+    },
+  });
+
+  const onSubmit = (data: any) => {
+    createPromoMutation.mutate(data);
+  };
+
+  return (
+    <div className="space-y-6">
+      <Form {...promoForm}>
+        <form onSubmit={promoForm.handleSubmit(onSubmit)} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={promoForm.control}
+              name="code"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Promo Code</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="SUMMER2024" onChange={e => field.onChange(e.target.value.toUpperCase())} />
+                  </FormControl>
+                  <FormDescription>Will be converted to uppercase</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={promoForm.control}
+              name="discountType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Discount Type</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="percentage">Percentage</SelectItem>
+                      <SelectItem value="fixed">Fixed Amount</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={promoForm.control}
+              name="discountValue"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Discount Value</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.01" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
+                  </FormControl>
+                  <FormDescription>
+                    {promoForm.watch("discountType") === "percentage" ? "Percentage (0-100)" : "Dollar amount"}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={promoForm.control}
+              name="maxUses"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Max Uses (Optional)</FormLabel>
+                  <FormControl>
+                    <Input type="number" {...field} value={field.value || ""} onChange={e => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)} />
+                  </FormControl>
+                  <FormDescription>Leave empty for unlimited</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={promoForm.control}
+              name="validFrom"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Valid From</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={promoForm.control}
+              name="validUntil"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Valid Until</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={promoForm.control}
+              name="minAmount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Minimum Amount ($)</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.01" {...field} value={field.value || ""} onChange={e => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)} />
+                  </FormControl>
+                  <FormDescription>Minimum booking amount required</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <FormField
+            control={promoForm.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="flex gap-2">
+            <Button type="submit" disabled={createPromoMutation.isPending}>
+              {createPromoMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              <span className="ml-2">{editingId ? "Update" : "Create"} Promo Code</span>
+            </Button>
+            {editingId && (
+              <Button type="button" variant="outline" onClick={() => { setEditingId(null); promoForm.reset(); }}>
+                Cancel
+              </Button>
+            )}
+          </div>
+        </form>
+      </Form>
+
+      <div className="space-y-4">
+        <h3 className="font-semibold">Active Promo Codes</h3>
+        {promoCodes?.map((promo) => (
+          <div key={promo.id} className="flex items-center justify-between p-4 border rounded-lg">
+            <div>
+              <div className="flex items-center gap-2">
+                <p className="font-mono font-bold text-lg">{promo.code}</p>
+                <span className={`text-xs px-2 py-1 rounded ${promo.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                  {promo.isActive ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground">{promo.description}</p>
+              <div className="text-sm text-muted-foreground mt-2 space-y-1">
+                <p>
+                  Discount: {promo.discountType === "percentage" 
+                    ? `${Number(promo.discountValue)}%` 
+                    : `$${Number(promo.discountValue)}`}
+                </p>
+                <p>Valid: {new Date(promo.validFrom).toLocaleDateString()} - {new Date(promo.validUntil).toLocaleDateString()}</p>
+                {promo.maxUses && <p>Uses: {promo.usedCount || 0} / {promo.maxUses}</p>}
+                {promo.minAmount && <p>Min Amount: ${Number(promo.minAmount)}</p>}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setEditingId(promo.id);
+                  promoForm.reset({
+                    code: promo.code,
+                    description: promo.description || "",
+                    discountType: promo.discountType as "percentage" | "fixed",
+                    discountValue: Number(promo.discountValue),
+                    maxUses: promo.maxUses || undefined,
+                    validFrom: new Date(promo.validFrom).toISOString().split('T')[0],
+                    validUntil: new Date(promo.validUntil).toISOString().split('T')[0],
+                    minAmount: promo.minAmount ? Number(promo.minAmount) : undefined,
+                  });
+                }}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => deletePromoMutation.mutate(promo.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const dayOptions = [
   { value: "monday", label: "Monday" },
@@ -171,7 +660,7 @@ export default function AdminDashboard() {
           </div>
 
           <Tabs defaultValue="create-provider" className="space-y-6">
-            <TabsList>
+            <TabsList className="grid grid-cols-2 lg:grid-cols-5">
               <TabsTrigger value="create-provider">
                 <Building className="h-4 w-4 mr-2" />
                 Create Provider
@@ -183,6 +672,14 @@ export default function AdminDashboard() {
               <TabsTrigger value="users">
                 <Users className="h-4 w-4 mr-2" />
                 All Users ({users?.length || 0})
+              </TabsTrigger>
+              <TabsTrigger value="pricing">
+                <Building className="h-4 w-4 mr-2" />
+                Pricing
+              </TabsTrigger>
+              <TabsTrigger value="promo-codes">
+                <Building className="h-4 w-4 mr-2" />
+                Promo Codes
               </TabsTrigger>
             </TabsList>
 
@@ -417,6 +914,32 @@ export default function AdminDashboard() {
                                       </FormControl>
                                       <FormLabel className="font-normal cursor-pointer">
                                         {lang.label}
+
+
+            <TabsContent value="pricing">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Provider Pricing Overrides</CardTitle>
+                  <CardDescription>Set custom pricing for specific providers</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <PricingManagement providers={providers || []} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="promo-codes">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Promo Codes & Discounts</CardTitle>
+                  <CardDescription>Manage promotional codes and discount campaigns</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <PromoCodeManagement providers={providers || []} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
                                       </FormLabel>
                                     </FormItem>
                                   )}

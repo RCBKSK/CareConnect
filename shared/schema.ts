@@ -126,6 +126,36 @@ export const refreshTokens = pgTable("refresh_tokens", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Promo codes for discounts
+export const promoCodes = pgTable("promo_codes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: text("code").notNull().unique(),
+  description: text("description"),
+  discountType: text("discount_type").notNull(), // "percentage" or "fixed"
+  discountValue: decimal("discount_value", { precision: 10, scale: 2 }).notNull(),
+  maxUses: integer("max_uses"),
+  usedCount: integer("used_count").default(0),
+  validFrom: timestamp("valid_from").notNull(),
+  validUntil: timestamp("valid_until").notNull(),
+  isActive: boolean("is_active").default(true),
+  applicableProviders: text("applicable_providers").array(), // null means all providers
+  minAmount: decimal("min_amount", { precision: 10, scale: 2 }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Provider pricing overrides set by admin
+export const providerPricingOverrides = pgTable("provider_pricing_overrides", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  providerId: varchar("provider_id").notNull().references(() => providers.id),
+  consultationFee: decimal("consultation_fee", { precision: 10, scale: 2 }),
+  homeVisitFee: decimal("home_visit_fee", { precision: 10, scale: 2 }),
+  discountPercentage: decimal("discount_percentage", { precision: 5, scale: 2 }),
+  notes: text("notes"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   provider: one(providers, {
@@ -218,6 +248,17 @@ export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
   }),
 }));
 
+export const promoCodesRelations = relations(promoCodes, ({ many }) => ({
+  // Future: track promo code usage per appointment
+}));
+
+export const providerPricingOverridesRelations = relations(providerPricingOverrides, ({ one }) => ({
+  provider: one(providers, {
+    fields: [providerPricingOverrides.providerId],
+    references: [providers.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -260,6 +301,18 @@ export const insertRefreshTokenSchema = createInsertSchema(refreshTokens).omit({
   createdAt: true,
 });
 
+export const insertPromoCodeSchema = createInsertSchema(promoCodes).omit({
+  id: true,
+  createdAt: true,
+  usedCount: true,
+});
+
+export const insertProviderPricingOverrideSchema = createInsertSchema(providerPricingOverrides).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Auth schemas
 export const loginSchema = z.object({
   email: z.string().email(),
@@ -291,6 +344,10 @@ export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
 export type RefreshToken = typeof refreshTokens.$inferSelect;
 export type InsertRefreshToken = z.infer<typeof insertRefreshTokenSchema>;
+export type PromoCode = typeof promoCodes.$inferSelect;
+export type InsertPromoCode = z.infer<typeof insertPromoCodeSchema>;
+export type ProviderPricingOverride = typeof providerPricingOverrides.$inferSelect;
+export type InsertProviderPricingOverride = z.infer<typeof insertProviderPricingOverrideSchema>;
 
 // Extended types for frontend
 export type ProviderWithUser = Provider & { user: User };
