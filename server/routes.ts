@@ -729,11 +729,15 @@ export async function registerRoutes(
       const lowerContent = content.toLowerCase();
 
       if (lowerContent.includes("booking") || lowerContent.includes("appointment")) {
-        responseContent = "You can book an appointment by selecting a provider from our home page and clicking 'Book Now'.";
-      } else if (lowerContent.includes("provider") || lowerContent.includes("doctor")) {
-        responseContent = "We have many qualified providers including physiotherapists, doctors, and nurses. You can search for them on our 'Providers' page.";
-      } else if (lowerContent.includes("price") || lowerContent.includes("cost") || lowerContent.includes("fee")) {
-        responseContent = "Consultation fees vary by provider. You can see the specific fees on each provider's profile.";
+        responseContent = "To book an appointment: 1. Find a provider. 2. Select a service. 3. Choose a time slot. 4. Confirm your booking. You can manage your appointments in the 'Appointments' tab.";
+      } else if (lowerContent.includes("provider") || lowerContent.includes("doctor") || lowerContent.includes("nurse") || lowerContent.includes("physio")) {
+        responseContent = "We have certified physiotherapists, doctors, and nurses. You can search by specialty and city on our Providers page to find the best match for your needs.";
+      } else if (lowerContent.includes("price") || lowerContent.includes("cost") || lowerContent.includes("fee") || lowerContent.includes("pay")) {
+        responseContent = "Each provider sets their own fees for consultations and home visits. You'll see the exact price before confirming any booking. We support Card, Crypto, and Bank Transfers.";
+      } else if (lowerContent.includes("hello") || lowerContent.includes("hi") || lowerContent.includes("hey")) {
+        responseContent = "Hello! I'm here to help you navigate CareConnect. You can ask me about how to book, finding providers, or pricing.";
+      } else if (lowerContent.includes("help") || lowerContent.includes("support")) {
+        responseContent = "I can assist with booking appointments, finding healthcare providers, or explaining our services. What specifically do you need help with?";
       }
 
       // Save assistant message

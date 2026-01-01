@@ -96,14 +96,19 @@ export function ServiceCategories() {
                     </motion.div>
                     <h3 className="text-xl font-bold mb-3">{category.title}</h3>
                     <p className="text-muted-foreground flex-1 leading-relaxed">{category.description}</p>
-                    <div className="flex items-center gap-2 mt-6 text-primary font-semibold">
-                      <span>Find providers</span>
-                      <motion.div
-                        initial={{ x: 0 }}
-                        whileHover={{ x: 5 }}
-                      >
-                        <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-                      </motion.div>
+                    <div className="flex flex-col sm:flex-row items-center gap-2 mt-6">
+                      <div className="flex items-center gap-2 text-primary font-semibold">
+                        <span>Find providers</span>
+                        <motion.div
+                          initial={{ x: 0 }}
+                          whileHover={{ x: 5 }}
+                        >
+                          <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                        </motion.div>
+                      </div>
+                      <Button variant="secondary" size="sm" className="w-full sm:w-auto ml-auto" asChild>
+                        <Link href={`/providers?type=${category.id}&bookNow=true`}>Book Now</Link>
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>

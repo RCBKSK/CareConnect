@@ -12,7 +12,7 @@ import type { ChatMessage } from "@shared/schema";
 export function ChatAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState("");
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
@@ -35,9 +35,7 @@ export function ChatAssistant() {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
-
-  if (!isAuthenticated) return null;
+  }, [messages, chatMutation.isPending]);
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
@@ -45,32 +43,42 @@ export function ChatAssistant() {
         <Button
           onClick={() => setIsOpen(true)}
           size="icon"
-          className="h-14 w-14 rounded-full shadow-lg"
+          className="h-14 w-14 rounded-full shadow-lg hover:scale-105 transition-transform"
         >
           <MessageSquare className="h-6 w-6" />
         </Button>
       ) : (
-        <Card className="w-80 h-[450px] flex flex-col shadow-2xl animate-in slide-in-from-bottom-5">
-          <CardHeader className="p-4 border-b flex flex-row items-center justify-between space-y-0">
+        <Card className="w-80 h-[450px] flex flex-col shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+          <CardHeader className="p-4 border-b flex flex-row items-center justify-between space-y-0 bg-primary text-primary-foreground rounded-t-lg">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Bot className="h-4 w-4 text-primary" />
+              <Bot className="h-4 w-4" />
               CareConnect Assistant
             </CardTitle>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-8 w-8 hover:bg-primary-foreground/10 text-primary-foreground"
               onClick={() => setIsOpen(false)}
             >
               <X className="h-4 w-4" />
             </Button>
           </CardHeader>
-          <CardContent className="flex-1 p-0 overflow-hidden flex flex-col">
+          <CardContent className="flex-1 p-0 overflow-hidden flex flex-col bg-background">
             <ScrollArea className="flex-1 p-4" ref={scrollRef}>
               <div className="space-y-4">
-                {messages.length === 0 && !isLoading && (
-                  <div className="text-center text-xs text-muted-foreground py-4">
-                    Hello! Ask me anything about appointments or providers.
+                <div className="flex justify-start">
+                  <div className="max-w-[80%] p-2 rounded-lg text-sm bg-muted rounded-bl-none">
+                    <div className="flex items-center gap-1 mb-1 opacity-70 text-[10px]">
+                      <Bot className="h-3 w-3" />
+                      Assistant
+                    </div>
+                    Hello! {isAuthenticated ? `Welcome back, ${user?.firstName}.` : "I'm your CareConnect assistant."} How can I help you today?
+                  </div>
+                </div>
+                {!isAuthenticated && (
+                  <div className="text-center p-4 bg-muted/30 rounded-lg border border-dashed">
+                    <p className="text-xs text-muted-foreground mb-2">Please login to save your chat history and get personalized help.</p>
+                    <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => window.location.href = "/login"}>Login</Button>
                   </div>
                 )}
                 {messages.slice().reverse().map((msg) => (
@@ -110,20 +118,20 @@ export function ChatAssistant() {
             </ScrollArea>
             <div className="p-4 border-t flex gap-2">
               <Input
-                placeholder="Type a message..."
+                placeholder={isAuthenticated ? "Type a message..." : "Login to chat"}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && message.trim()) {
+                  if (e.key === "Enter" && message.trim() && isAuthenticated) {
                     chatMutation.mutate(message);
                   }
                 }}
-                disabled={chatMutation.isPending}
+                disabled={chatMutation.isPending || !isAuthenticated}
               />
               <Button
                 size="icon"
-                onClick={() => message.trim() && chatMutation.mutate(message)}
-                disabled={chatMutation.isPending || !message.trim()}
+                onClick={() => message.trim() && isAuthenticated && chatMutation.mutate(message)}
+                disabled={chatMutation.isPending || !message.trim() || !isAuthenticated}
               >
                 <Send className="h-4 w-4" />
               </Button>
