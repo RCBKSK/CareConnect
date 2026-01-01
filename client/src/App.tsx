@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/lib/auth";
+import { ChatAssistant } from "@/components/chat-assistant";
 import Home from "@/pages/home";
 import Providers from "@/pages/providers";
 import ProviderProfile from "@/pages/provider-profile";
@@ -59,6 +60,7 @@ function App() {
         <AuthProvider>
           <Toaster />
           <Router />
+          <ChatAssistant />
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>

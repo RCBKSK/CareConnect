@@ -78,7 +78,7 @@ export default function Booking() {
         title: "Success",
         description: `Your appointment has been booked successfully! Payment method: ${paymentMethod === 'crypto' ? 'Cryptocurrency' : paymentMethod === 'card' ? 'Credit/Debit Card' : paymentMethod === 'bank_transfer' ? 'Bank Transfer' : 'Cash'}`,
       });
-      navigate("/appointments");
+      setStep("confirmed");
     },
     onError: () => {
       toast({
