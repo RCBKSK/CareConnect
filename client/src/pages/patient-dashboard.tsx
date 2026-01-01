@@ -2,6 +2,8 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { WalletComponent } from "@/components/wallet";
+import { HealthRecordsComponent } from "@/components/health-records";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -329,7 +331,21 @@ export default function PatientDashboard() {
               <TabsTrigger value="invoices" data-testid="tab-invoices">
                 Invoices
               </TabsTrigger>
+              <TabsTrigger value="wallet" data-testid="tab-wallet">
+                Wallet
+              </TabsTrigger>
+              <TabsTrigger value="health-records" data-testid="tab-health-records">
+                Health Records
+              </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="wallet" className="mt-6">
+              <WalletComponent />
+            </TabsContent>
+
+            <TabsContent value="health-records" className="mt-6">
+              <HealthRecordsComponent />
+            </TabsContent>
 
             <TabsContent value="upcoming" className="mt-6">
               {isLoading ? (

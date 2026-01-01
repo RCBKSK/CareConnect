@@ -45,10 +45,25 @@ export default function ProviderProfile() {
     enabled: !!id,
   });
 
-  const timeSlots = [
-    "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-    "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00",
-  ];
+  const generateTimeSlots = () => {
+    if (!provider) return [];
+    const slots = [];
+    const start = provider.workingHoursStart || "09:00";
+    const end = provider.workingHoursEnd || "18:00";
+    const buffer = provider.bufferTime || 15;
+    const duration = 30; // default slot duration
+
+    let current = new Date(`2024-01-01T${start}`);
+    const endTime = new Date(`2024-01-01T${end}`);
+
+    while (current < endTime) {
+      slots.push(current.toTimeString().slice(0, 5));
+      current.setMinutes(current.getMinutes() + duration + buffer);
+    }
+    return slots;
+  };
+
+  const dynamicTimeSlots = generateTimeSlots();
 
   const handleBooking = () => {
     if (!isAuthenticated) {
@@ -133,6 +148,16 @@ export default function ProviderProfile() {
                         {getInitials()}
                       </AvatarFallback>
                     </Avatar>
+
+                    {provider.introVideoUrl && (
+                      <div className="mt-4">
+                        <video 
+                          src={provider.introVideoUrl} 
+                          controls 
+                          className="w-full max-w-md rounded-lg shadow-sm"
+                        />
+                      </div>
+                    )}
 
                     <div className="flex-1 space-y-3">
                       <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -415,7 +440,7 @@ export default function ProviderProfile() {
                   <div className="space-y-2">
                     <p className="text-sm font-medium">Select Time</p>
                     <div className="grid grid-cols-3 gap-2">
-                      {timeSlots.map((time) => (
+                      {dynamicTimeSlots.map((time) => (
                         <Button
                           key={time}
                           variant={selectedTime === time ? "default" : "outline"}
