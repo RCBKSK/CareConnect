@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Activity, HeartPulse, Stethoscope, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
