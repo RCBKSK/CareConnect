@@ -701,5 +701,53 @@ export async function registerRoutes(
     }
   });
 
+  // ============ CHAT ASSISTANT ROUTES ============
+
+  app.get("/api/chat", authenticateToken, async (req: AuthRequest, res: Response) => {
+    try {
+      const messages = await storage.getChatMessages(req.user!.id);
+      res.json(messages);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get chat messages" });
+    }
+  });
+
+  app.post("/api/chat", authenticateToken, async (req: AuthRequest, res: Response) => {
+    try {
+      const { content } = req.body;
+      const userId = req.user!.id;
+
+      // Save user message
+      await storage.createChatMessage({
+        userId,
+        content,
+        role: "user",
+      });
+
+      // Simple rule-based assistant logic
+      let responseContent = "I'm your CareConnect assistant. How can I help you today?";
+      const lowerContent = content.toLowerCase();
+
+      if (lowerContent.includes("booking") || lowerContent.includes("appointment")) {
+        responseContent = "You can book an appointment by selecting a provider from our home page and clicking 'Book Now'.";
+      } else if (lowerContent.includes("provider") || lowerContent.includes("doctor")) {
+        responseContent = "We have many qualified providers including physiotherapists, doctors, and nurses. You can search for them on our 'Providers' page.";
+      } else if (lowerContent.includes("price") || lowerContent.includes("cost") || lowerContent.includes("fee")) {
+        responseContent = "Consultation fees vary by provider. You can see the specific fees on each provider's profile.";
+      }
+
+      // Save assistant message
+      const assistantMessage = await storage.createChatMessage({
+        userId,
+        content: responseContent,
+        role: "assistant",
+      });
+
+      res.json(assistantMessage);
+    } catch (error) {
+      res.status(500).json({ message: "Chat failed" });
+    }
+  });
+
   return httpServer;
 }

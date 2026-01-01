@@ -9,6 +9,7 @@ import {
   refreshTokens,
   promoCodes,
   providerPricingOverrides,
+  chatMessages,
 } from "@shared/schema";
 import type {
   User,
@@ -35,6 +36,8 @@ import type {
   InsertPromoCode,
   ProviderPricingOverride,
   InsertProviderPricingOverride,
+  ChatMessage,
+  InsertChatMessage,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, gte, lte, or, sql } from "drizzle-orm";
@@ -108,6 +111,10 @@ export interface IStorage {
   getAllPricingOverrides(): Promise<ProviderPricingOverride[]>;
   updateProviderPricingOverride(id: string, data: Partial<ProviderPricingOverride>): Promise<ProviderPricingOverride | undefined>;
   deleteProviderPricingOverride(id: string): Promise<void>;
+
+  // Chat Messages
+  getChatMessages(userId: string): Promise<ChatMessage[]>;
+  createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -478,6 +485,16 @@ export class DatabaseStorage implements IStorage {
 
   async deleteProviderPricingOverride(id: string): Promise<void> {
     await db.delete(providerPricingOverrides).where(eq(providerPricingOverrides.id, id));
+  }
+
+  // Chat Messages
+  async getChatMessages(userId: string): Promise<ChatMessage[]> {
+    return await db.select().from(chatMessages).where(eq(chatMessages.userId, userId)).orderBy(desc(chatMessages.createdAt));
+  }
+
+  async createChatMessage(message: InsertChatMessage): Promise<ChatMessage> {
+    const [msg] = await db.insert(chatMessages).values(message).returning();
+    return msg;
   }
 }
 
