@@ -10,6 +10,7 @@ import {
   promoCodes,
   providerPricingOverrides,
   chatMessages,
+  healthRecords,
 } from "@shared/schema";
 import type {
   User,
@@ -38,6 +39,8 @@ import type {
   InsertProviderPricingOverride,
   ChatMessage,
   InsertChatMessage,
+  HealthRecord,
+  InsertHealthRecord,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, gte, lte, or, sql } from "drizzle-orm";
@@ -111,6 +114,14 @@ export interface IStorage {
   getAllPricingOverrides(): Promise<ProviderPricingOverride[]>;
   updateProviderPricingOverride(id: string, data: Partial<ProviderPricingOverride>): Promise<ProviderPricingOverride | undefined>;
   deleteProviderPricingOverride(id: string): Promise<void>;
+
+  // Health Records
+  getHealthRecords(patientId: string): Promise<HealthRecord[]>;
+  createHealthRecord(record: InsertHealthRecord): Promise<HealthRecord>;
+  deleteHealthRecord(id: string): Promise<void>;
+
+  // Wallet
+  updateWalletBalance(userId: string, amount: string): Promise<User | undefined>;
 
   // Chat Messages
   getChatMessages(userId: string): Promise<ChatMessage[]>;
@@ -495,6 +506,29 @@ export class DatabaseStorage implements IStorage {
   async createChatMessage(message: InsertChatMessage): Promise<ChatMessage> {
     const [msg] = await db.insert(chatMessages).values(message).returning();
     return msg;
+  }
+
+  // Health Records
+  async getHealthRecords(patientId: string): Promise<HealthRecord[]> {
+    return await db.select().from(healthRecords).where(eq(healthRecords.patientId, patientId)).orderBy(desc(healthRecords.createdAt));
+  }
+
+  async createHealthRecord(record: InsertHealthRecord): Promise<HealthRecord> {
+    const [newRecord] = await db.insert(healthRecords).values(record).returning();
+    return newRecord;
+  }
+
+  async deleteHealthRecord(id: string): Promise<void> {
+    await db.delete(healthRecords).where(eq(healthRecords.id, id));
+  }
+
+  // Wallet
+  async updateWalletBalance(userId: string, amount: string): Promise<User | undefined> {
+    const user = await this.getUser(userId);
+    if (!user) return undefined;
+    const newBalance = (Number(user.walletBalance || 0) + Number(amount)).toFixed(2);
+    const [updatedUser] = await db.update(users).set({ walletBalance: newBalance }).where(eq(users.id, userId)).returning();
+    return updatedUser;
   }
 }
 

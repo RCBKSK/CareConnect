@@ -753,5 +753,38 @@ export async function registerRoutes(
     }
   });
 
+  // ============ WALLET ROUTES ============
+  app.post("/api/wallet/topup", authenticateToken, async (req: AuthRequest, res: Response) => {
+    try {
+      const { amount } = req.body;
+      const user = await storage.updateWalletBalance(req.user!.id, amount);
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ message: "Topup failed" });
+    }
+  });
+
+  // ============ HEALTH RECORDS ROUTES ============
+  app.get("/api/health-records", authenticateToken, async (req: AuthRequest, res: Response) => {
+    try {
+      const records = await storage.getHealthRecords(req.user!.id);
+      res.json(records);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get health records" });
+    }
+  });
+
+  app.post("/api/health-records", authenticateToken, async (req: AuthRequest, res: Response) => {
+    try {
+      const record = await storage.createHealthRecord({
+        ...req.body,
+        patientId: req.user!.id,
+      });
+      res.status(201).json(record);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create health record" });
+    }
+  });
+
   return httpServer;
 }

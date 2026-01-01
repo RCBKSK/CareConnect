@@ -24,6 +24,7 @@ export const users = pgTable("users", {
   address: text("address"),
   city: text("city"),
   createdAt: timestamp("created_at").defaultNow(),
+  walletBalance: decimal("wallet_balance", { precision: 10, scale: 2 }).default("0"),
 });
 
 // Provider profiles table
@@ -48,6 +49,8 @@ export const providers = pgTable("providers", {
   availableDays: text("available_days").array(),
   workingHoursStart: text("working_hours_start").default("09:00"),
   workingHoursEnd: text("working_hours_end").default("18:00"),
+  bufferTime: integer("buffer_time").default(15), // minutes between appointments
+  introVideoUrl: text("intro_video_url"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -123,6 +126,16 @@ export const chatMessages = pgTable("chat_messages", {
   userId: varchar("user_id").notNull().references(() => users.id),
   content: text("content").notNull(),
   role: text("role").notNull(), // 'user' or 'assistant'
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Health records
+export const healthRecords = pgTable("health_records", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  patientId: varchar("patient_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  fileUrl: text("file_url").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -258,6 +271,13 @@ export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
   }),
 }));
 
+export const healthRecordsRelations = relations(healthRecords, ({ one }) => ({
+  patient: one(users, {
+    fields: [healthRecords.patientId],
+    references: [users.id],
+  }),
+}));
+
 export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
   user: one(users, {
     fields: [refreshTokens.userId],
@@ -318,6 +338,11 @@ export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
   createdAt: true,
 });
 
+export const insertHealthRecordSchema = createInsertSchema(healthRecords).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertRefreshTokenSchema = createInsertSchema(refreshTokens).omit({
   id: true,
   createdAt: true,
@@ -366,6 +391,8 @@ export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+export type HealthRecord = typeof healthRecords.$inferSelect;
+export type InsertHealthRecord = z.infer<typeof insertHealthRecordSchema>;
 export type RefreshToken = typeof refreshTokens.$inferSelect;
 export type InsertRefreshToken = z.infer<typeof insertRefreshTokenSchema>;
 export type PromoCode = typeof promoCodes.$inferSelect;
